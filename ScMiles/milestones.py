@@ -38,8 +38,7 @@ class milestones:
         self.anchor_nLines = []
         self.traj_dict = {}
         self.trajPool_ = None
-        
-        
+
     def __enter__(self):
         return self
                
@@ -235,11 +234,25 @@ class milestones:
                     ver_2[1] = self.__check_dihedral_pbc(ver_2[1])
                     self.possible_MS_property[(anchor_1,anchor_2)] = [ver_2, ver_1, pt_pbc_1, pt_pbc_2]
 
-    def __read_tinker_arc(self, coord_name):
-        f = open(coord_name + '.arc')
-        lines = f.readlines()
-        f.close()
-        return lines
+    def __read_tinker_arc(self, arc_name, frame_id):
+        arc = arc_name.split('.')[0] + '.arc'
+        with open(arc) as f:
+            frame_0 = f.readline()
+            num_of_atoms = int(frame_0)
+            for i, l in enumerate(f):
+                frame_0 += l
+                if i == num_of_atoms:
+                    break
+            if frame_id == 0:
+                return frame_0
+            frame_byte_size = len(frame_0.encode())
+            f.seek(frame_byte_size * frame_id, 0)
+            frame_i = f.read(frame_byte_size)
+            frame_i = frame_i.strip().splitlines()
+            tmp_ = ['\n']
+            tmp_ = tmp_ * (num_of_atoms+2)
+            frame_i = list(map(lambda x, y: x + y, frame_i, tmp_))
+        return frame_i
 
     def __calculate_dihedral(self, coord):
         A = np.array(coord[0])
@@ -423,7 +436,6 @@ class milestones:
         crddir = filePath + '/crd'
         os.chdir(work_path)
         restrn = self.parameter.restrain
-        lines = self.__read_tinker_arc(coord_name)
         fine_hit = True if seek_ else False
         hit_MS = None
         hit_MS_seek = []
@@ -431,13 +443,14 @@ class milestones:
             coord = []
             dihedral_list = []
             for i in range(num_snapshot):
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[0]+1].split()
+                lines = self.__read_tinker_arc(coord_name, i)
+                a_ = lines[self.parameter.restrain_grp[0]+1].split()
                 a_1 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[1]+1].split()
+                a_ = lines[self.parameter.restrain_grp[1]+1].split()
                 a_2 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[2]+1].split()
+                a_ = lines[self.parameter.restrain_grp[2]+1].split()
                 a_3 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[3]+1].split()
+                a_ = lines[self.parameter.restrain_grp[3]+1].split()
                 a_4 = [float(a_[2]),float(a_[3]),float(a_[4])]
                 coord = [a_1, a_2, a_3, a_4]
                 dihedral_val = self.__calculate_dihedral(coord)
@@ -449,9 +462,8 @@ class milestones:
                         return hit_MS, i, 1
                     new_MS_dir = crddir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1])
                     os.makedirs(new_MS_dir)
-                    write_lines = lines[i*nLines[index]:(i+1)*nLines[index]]
                     MS_config_path = new_MS_dir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1]) + '.xyz'
-                    self.__write2txyz(MS_config_path, write_lines)
+                    self.__write2txyz(MS_config_path, lines)
                     fine_hit = True
                     hit_MS_seek.append(hit_MS)
             # avg for 1D only right now
@@ -461,14 +473,13 @@ class milestones:
                     MS_list_.append(hit_MS)
                     if not seek_:
                         return hit_MS, n, ratio
-                    config_1 = lines[n*nLines[index]:(n+1)*nLines[index]]
-                    config_2 = lines[(n+1)*nLines[index]:(n+2)*nLines[index]]
-                    config = self.__avg_config(config_1, config_2, ratio)
+                    config_1 = self.__read_tinker_arc(coord_name, n)
+                    config_2 = self.__read_tinker_arc(coord_name, n+1)
+                    config_ = self.__avg_config(config_1, config_2, ratio)
                     new_MS_dir = crddir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1])
                     os.makedirs(new_MS_dir)
-                    write_lines = lines[n*nLines[index]:(n+1)*nLines[index]]
                     MS_config_path = new_MS_dir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1]) + '.xyz'
-                    self.__write2txyz(MS_config_path, write_lines)
+                    self.__write2txyz(MS_config_path, config_)
                     hit_MS_seek.append(hit_MS)
             if not seek_:
                 return None, 0, 0
@@ -478,21 +489,22 @@ class milestones:
             coord_2 = []
             dihedral_list = []
             for i in range(num_snapshot):
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[0]+1].split()
+                lines = self.__read_tinker_arc(coord_name, i)
+                a_ = lines[self.parameter.restrain_grp[0]+1].split()
                 a_1 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[1]+1].split()
+                a_ = lines[self.parameter.restrain_grp[1]+1].split()
                 a_2 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[2]+1].split()
+                a_ = lines[self.parameter.restrain_grp[2]+1].split()
                 a_3 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[3]+1].split()
+                a_ = lines[self.parameter.restrain_grp[3]+1].split()
                 a_4 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[4]+1].split()
+                a_ = lines[self.parameter.restrain_grp[4]+1].split()
                 a_5 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[5]+1].split()
+                a_ = lines[self.parameter.restrain_grp[5]+1].split()
                 a_6 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[6]+1].split()
+                a_ = lines[self.parameter.restrain_grp[6]+1].split()
                 a_7 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[i*nLines[index]+self.parameter.restrain_grp[7]+1].split()
+                a_ = lines[self.parameter.restrain_grp[7]+1].split()
                 a_8 = [float(a_[2]),float(a_[3]),float(a_[4])]
                 coord_1 = [a_1, a_2, a_3, a_4]
                 coord_2 = [a_5, a_6, a_7, a_8]
@@ -506,9 +518,8 @@ class milestones:
                         return hit_MS, i, 1
                     new_MS_dir = crddir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1])
                     os.makedirs(new_MS_dir)
-                    write_lines = lines[i*nLines[index]:(i+1)*nLines[index]]
                     MS_config_path = new_MS_dir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1]) + '.xyz'
-                    self.__write2txyz(MS_config_path, write_lines)
+                    self.__write2txyz(MS_config_path, lines)
                     hit_MS_seek.append(hit_MS)
             if not seek_:
                 return None, 0, 0
@@ -531,9 +542,9 @@ class milestones:
                         return hit_MS, i, 1
                     new_MS_dir = crddir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1])
                     os.makedirs(new_MS_dir)
-                    write_lines = lines[i*nLines[index]:(i+1)*nLines[index]]
+                    lines = self.__read_tinker_arc(coord_name, i)
                     MS_config_path = new_MS_dir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1]) + '.xyz'
-                    self.__write2txyz(MS_config_path, write_lines)
+                    self.__write2txyz(MS_config_path, lines)
                     hit_MS_seek.append(hit_MS)
             if not seek_:
                 return None, 0, 0
@@ -668,8 +679,7 @@ class milestones:
             MS_dir = crddir + '/MS' + str(i[0]) + '_' + str(i[1])
             key_path = MS_dir + '/r_MD-MS%d_%d.key' %(i[0],i[1])
             path_keyfile = filePath + '/restrain.key'
-            path_program = os.getcwd()
-            path_config_py = os.path.join(path_program, 'read_config.py')
+            path_config_py = os.path.join(self.parameter.path_program, 'read_config.py')
             copy(path_keyfile, key_path)
             copy(path_config_py, MS_dir)
             r = self.__random_num_assign([])
@@ -706,7 +716,7 @@ class milestones:
                     end_config = eq_num + self.parameter.trajPerLaunch
                     with open(shfile, 'w') as f0:
                         f0.write(f"python read_config.py {job.coord_name} {crddir} {eq_num} {end_config} {self.parameter.interval}")
-                    shstr = f"python /home/xy3866/bin_Miles/TinkerGPU2022/submitTinker.py -x read_traj.sh -t CPU -p {MS_dir}"
+                    shstr = f"python /home/xy3866/bin_Miles1/TinkerGPU2022/submitTinker.py -x read_traj.sh -t CPU -p {MS_dir}"
                     with open(scriptfile, 'w') as f0:
                         f0.write(shstr)
                     for j in range(eq_num, num_snapshot, self.parameter.interval):
@@ -724,7 +734,7 @@ class milestones:
                     Config_Num = index-1
                     log(f"Complete Restrained MD {job.coord_name}", self.parameter.path_log)
                 else:
-                    time.sleep(3.0)
+                    time.sleep(1.0)
             if(Finish_Num == len_job_list):
                 log("Restrained MD completed!", self.parameter.path_log)
                 break
@@ -809,17 +819,17 @@ class milestones:
                     MS_list_ = [self.traj_dict[i].start_MS]
                     hit_MS, index, ratio = self.__whether_hit_new_MS(job.work_path, job.coord_name, num_snapshot, 0, [self.traj_dict[i].length], MS_list_, False)
                     os.chdir(job.work_path)
-                    lines = self.__read_tinker_arc(self.traj_dict[i].traj_name)
                     txyz_path = self.traj_dict[i].MS_dir + f"/{self.traj_dict[i].traj_name}.xyz"
                     length = self.traj_dict[i].length
                     if(hit_MS):
                         if(ratio != 1):
-                            config_1 = lines[index*length:(index+1)*length]
-                            config_2 = lines[(index+1)*length:(index+2)*length]
+                            config_1 = self.__read_tinker_arc(self.traj_dict[i].traj_name, index)
+                            config_2 = self.__read_tinker_arc(self.traj_dict[i].traj_name, index+1)
                             config_ = self.__avg_config(config_1, config_2, ratio)
                             self.__write2txyz(txyz_path, config_)
                         else:
-                            self.__write2txyz(txyz_path, lines[index*length:(index+1)*length])
+                            config_ = self.__read_tinker_arc(self.traj_dict[i].traj_name, index)
+                            self.__write2txyz(txyz_path, config_)
 
                         os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}-results.log')
                         os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}-time.dat')
@@ -844,7 +854,8 @@ class milestones:
                             os.remove(job.work_path + f"/RMSD-{job.coord_name}-final.dat")
                         if(not hit_MS):
                             log(f"Restart at {job.work_path}/{job.coord_name}", self.parameter.path_log)
-                            self.__write2txyz(txyz_path, lines[-length:])
+                            config_ = self.__read_tinker_arc(self.traj_dict[i].traj_name, num_snapshot-1)
+                            self.__write2txyz(txyz_path, config_)
                             os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}.arc')
                             self.traj_dict[i].restart(job)
                             continue
@@ -862,7 +873,8 @@ class milestones:
                         log(msg_, self.parameter.path_log)
                     else:
                         log(f"Restart at {job.work_path}/{job.coord_name}", self.parameter.path_log)
-                        self.__write2txyz(txyz_path, lines[-length:])
+                        config_ = self.__read_tinker_arc(self.traj_dict[i].traj_name, num_snapshot-1)
+                        self.__write2txyz(txyz_path, config_)
                         os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}.arc')
                         os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}-time.dat')
                         os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}-results.log')

@@ -74,6 +74,8 @@ class trajPool:
     def __init__(self, parameter, traj_dict):
         self.parameter = parameter
         self.traj_dict = traj_dict
+        self.smooth_K_list = []
+        self.smooth_list_limit = self.parameter.smooth_list_limit
         
     def __enter__(self):
         return self
@@ -125,10 +127,22 @@ class trajPool:
             time_vec.append(np.average(time_list_))
             time_std.append(np.std(time_list_))
         return np.array(time_vec), np.array(time_std)
-    
+
+    def smooth_list(self, data):
+        if(len(self.smooth_K_list) == self.smooth_list_limit):
+            self.smooth_K_list.pop(0)
+        new_K = data.copy()
+        dim = len(new_K)
+        self.smooth_K_list.append(new_K)
+        tmp = np.zeros((dim,dim))
+        for j in self.smooth_K_list:
+            tmp += j
+        return tmp/len(self.smooth_K_list)
+
     def compute_(self):
         k_count = self.count_ms()
-        self.parameter.kij = k_average(k_count)
+        k_n = k_average(k_count)
+        self.parameter.kij = self.smooth_list(k_n)
         np.set_printoptions(threshold=np.inf)
         print("K:")
         print(self.parameter.kij)
