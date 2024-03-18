@@ -54,35 +54,71 @@ The program conducts the unrestrained MD from all the configurations of the chos
 ## Input Setting
 input.txt records the input setting to lead the whole job, and here are the meanings of all the important commands and keywords:
 
-* `path_jobsubmit`  : The path of submission directory, which contains all the generated GPU MD job .sh files for parallelized submission
+* `path_jobsubmit`  : The path of submission directory, which contains all the generated GPU job commond files (.sh) for parallelized submission
 
-path_tinker  : The path of directory including Tinker executives: analyze9.x, minimize9.x, dynamic9.x
-initial_iteration  : The starting iteration index (commonly, we starts from 1)
-max_iteration  : The maximum number of iterations
-milestoneSearch  : Two options: 0 or 1, 0 means the Seek step is skipped (the MS configurations already exist in crd/ directory), and 1 means the Seek Step is included.
-time_step  : The time step of MD jobs (unit: fs, default = 2.0)
-seek_traj  : The number of trajectories starting from each anchor in Seek Step (default: 0) 
-seek_time  : The total time of each Seek MD jobs (unit: ns, default: 1.0)
-seek_save_frequency  : The save frequency of Seek Step (unit: ns, default: 0.01) 
-restrain_md_time  : The total restrained MD time in Step 3 (generating new configurations on each MS) (unit: ns, default: 1.0)
-restrain_eq_time  : The equilibration time in restrained MD jobs (the snapshots recorded in this time scope will be ignored and the configurations are picked up from the rest) (unit: ns, default: 0.5)
-interval  : The interval between two snapshots chosen for configurations of each MS in Step 3
-traj_per_launch  : The number of trajectories to launch for each MS in each iteration (default: 100)
-sampling_time  : The sampling time for a single MD job in Production Step (unit: ps, default: 100.0)
-save_frequency  : The save frequency of MD jobs in Production Step (unit: ns, default: 0.01)
-max_traj_per_launch  : The maximum of trajectories for each MS during the iterations
-max_md_time  : The maximum time limit of each MS job (one MD job may restart from the last coordinates for many times, the program will record all the time consumed by any single job and make sure it will not exceed this upper limit.) (unit: ns, default: 10.0)
-anchorsNum  : The number of anchor coordinate files (tinker xyz) given in anchors/ directory
-restrain_type  : The type of coarse variables (dihedral or RMSD) 
-(format: dihedral a b c d (a,b,c,d are the atom id defining the dihedral); RMSD A B C (A: RMSD between reactant and product, in Angstrom; B: divide the value of RMSD A into B parts; C: the first C atoms will be used to calculate the RMSD)
-forcefield  : The forcefield file .prm
-skip_restrain  : Turn off Step 3 when written in input.txt
-reactant  : The name of MS denoting reactant state (format: A,B  A and B are 2 neighbor anchor indices)
-product  : The name of MS denoting reactant state (format: A,B  A and B are 2 neighbor anchor indices)
-pbc  : The periodic boundary (format: A,B  A and B are the same MS in periodic condition)
-milestone_threshold:  The threshold to tell if one trajectory has already hit one MS (unit for dihedral: degree; unit for RMSD: Angstrom)
-ensemble  : MD ensemble (2 options: NVT or NPT)
-temperature  : MD Temperature
-pressure  : MD Pressure
-tolerance  : Convergence check by using MFPT value
-force_const  : The harmonic force constant used in restrained MD (Step 3)
+* `path_tinker`  : The path of directory including Tinker executives: analyze9.x, minimize9.x, dynamic9.x
+
+* `initial_iteration`  : The starting iteration index (commonly, we starts from 1)
+
+* `max_iteration`  : The maximum number of iterations
+
+* `milestoneSearch`  : Two options: 0 or 1, 0 means the Seek step is skipped (the MS configurations already exist in `work/crd/` directory), and 1 means the Seek Step is included.
+
+* `time_step`  : The time step of MD jobs (unit: fs, default = 2.0)
+
+* `seek_traj`  : The number of trajectories starting from each anchor in Seek Step (default: 0) 
+
+* `seek_time`  : The total time of each Seek MD jobs (unit: ns, default: 1.0)
+
+* `seek_save_frequency`  : The save frequency of Seek Step (unit: ns, default: 0.01) 
+
+* `restrain_md_time`  : The total restrained MD time in Step 3 (generating new configurations on each MS) (unit: ns, default: 1.0)
+
+* `restrain_eq_time`  : The equilibration time in restrained MD jobs (the snapshots recorded in this time scope will be ignored and the configurations are picked up from the rest) (unit: ns, default: 0.5)
+
+* `interval`  : The interval between two snapshots chosen for configurations of each MS in Step 3
+
+* `traj_per_launch`  : The number of trajectories to launch for each MS in each iteration (default: 100)
+
+* `sampling_time`  : The sampling time for a single MD job in Production Step (unit: ps, default: 100.0)
+
+* `save_frequency`  : The save frequency of MD jobs in Production Step (unit: ns, default: 0.01)
+* `max_traj_per_launch`  : The maximum of trajectories for each MS during the iterations
+
+* `max_md_time`  : The maximum time limit of each MS job (one MD job may restart from the last coordinates for many times, the program will record all the time consumed by any single job and make sure it will not exceed this upper limit.) (unit: ns, default: 10.0)
+
+* `anchorsNum`  : The number of anchor coordinate files (tinker xyz) given in `work/anchors/` directory
+
+* `restrain_type`  : The type of coarse variables (dihedral or RMSD) 
+
+format: `dihedral a b c d` (a,b,c,d are the atom id defining the dihedral)
+
+`RMSD A B C` (A: RMSD between reactant and product, in Angstrom; B: divide the value of RMSD A into B parts; C: the first C atoms will be used to calculate the RMSD)
+
+* `forcefield`  : The forcefield file .prm
+
+* `skip_restrain`  : Turn off Step 3 when written in input.txt
+
+* `reactant`  : The name of MS denoting reactant state 
+
+format: `reactant A,B`  A and B are 2 neighbor anchor indices
+
+* `product`  : The name of MS denoting reactant state 
+
+format: `reactant A,B`  A and B are 2 neighbor anchor indices
+
+* `pbc`  : The periodic boundary 
+
+format: `pbc A,B`  A and B are the same MS in periodic condition
+
+* `milestone_threshold`:  The threshold to tell if one trajectory has already hit one MS (unit for dihedral: degree; unit for RMSD: Angstrom)
+
+* `ensemble`  : MD ensemble (2 options: NVT or NPT)
+
+* `temperature`  : MD Temperature
+
+* `pressure`  : MD Pressure
+
+* `tolerance`  : Convergence check by using MFPT value
+
+* `force_const`  : The harmonic force constant used in restrained MD (Step 3)
