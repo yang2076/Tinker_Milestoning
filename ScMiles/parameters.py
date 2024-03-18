@@ -13,13 +13,13 @@ import pandas as pd
 
 class parameters:
     def __init__(self, work_dir=None, path_jobsubmit=None, path_tinker=None, forcefield=None,
-                 temp=298.15, pressure=1., ensemble=None, timeFactor=1.,
-                 key_free=None, seek_traj=0, seekTime=1., seek_saveFrequency=1., RestartFrequency=None,
+                 temp=298.15, pressure=1., ensemble=None, timeFactor=2.,
+                 key_free=None, seek_traj=0, seekTime=1., seek_saveFrequency=0.01, RestartFrequency=None,
                  anchors_txt=None, path_anchors=None, AnchorNum=None,
                  reactant=None,product=None, key_restrain=None, restrain=None, restrain_grp=None, trajWidths=13,
-                 bincoordinates=None, binvelocities=None, coor=None, saveFrequency=1., interval=1,
+                 bincoordinates=None, binvelocities=None, coor=None, saveFrequency=0.01, interval=1,
                  restrain_md_time=1.0, restrain_eq_time=0.5, res_saveFrequency=1.,
-                 startTraj=None, trajPerLaunch=None, max_md_time=10., stepPerLaunch=1000,
+                 startTraj=None, trajPerLaunch=100, max_md_time=10., stepPerLaunch=1000,
                  coordinates=None, outputname=None, tolerance=1e-5, err_sampling=None) -> None:
 
         # Directory of your work
@@ -56,7 +56,7 @@ class parameters:
 
         # Type of milestoning
         # 0 for classic milestoning; 1 for exact milestoning: iteration
-        self.method = 0
+        self.method = 1
         
         # Max num. of iterations
         self.maxIteration = 100

@@ -1,9 +1,3 @@
-# outputname in NAMD
-outputname Aladipep
-
-# method: 0 -- classic milestoning; 1 -- exaxt milestoning
-method 1
-
 # iteration
 initial_iteration 1
 max_iteration 100

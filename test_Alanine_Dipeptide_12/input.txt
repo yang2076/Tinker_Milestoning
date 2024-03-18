@@ -1,9 +1,3 @@
-# outputname in NAMD
-outputname Aladipep
-
-# method: 0 -- classic milestoning; 1 -- exaxt milestoning
-method 1
-
 # iteration
 initial_iteration 1
 max_iteration 100
@@ -21,8 +15,6 @@ seek_save_frequency 0.01
 restrain_md_time 1.5
 restrain_eq_time 0.5
 
-# first snapshot to use
-start_traj 10
 # how many trajectories to launch for each iteration
 traj_per_launch 100
 # the interval between two snapshots 
