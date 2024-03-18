@@ -91,7 +91,7 @@ input.txt records the input setting to lead the whole job, and here are the mean
 
 * `restrain_type`  : The type of coarse variables (dihedral or RMSD) 
 
-format: `dihedral a b c d` (a,b,c,d are the atom id defining the dihedral)
+`dihedral a b c d` (a,b,c,d are the atom id defining the dihedral)
 
 `RMSD A B C` (A: RMSD between reactant and product, in Angstrom; B: divide the value of RMSD A into B parts; C: the first C atoms will be used to calculate the RMSD)
 
@@ -101,15 +101,15 @@ format: `dihedral a b c d` (a,b,c,d are the atom id defining the dihedral)
 
 * `reactant`  : The name of MS denoting reactant state 
 
-format: `reactant A,B`  A and B are 2 neighbor anchor indices
+`reactant A,B`  A and B are 2 neighbor anchor indices
 
 * `product`  : The name of MS denoting reactant state 
 
-format: `reactant A,B`  A and B are 2 neighbor anchor indices
+`reactant A,B`  A and B are 2 neighbor anchor indices
 
 * `pbc`  : The periodic boundary 
 
-format: `pbc A,B`  A and B are the same MS in periodic condition
+`pbc A,B`  A and B are the same MS in periodic condition
 
 * `milestone_threshold`:  The threshold to tell if one trajectory has already hit one MS (unit for dihedral: degree; unit for RMSD: Angstrom)
 
