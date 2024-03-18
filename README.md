@@ -14,12 +14,13 @@ openbabel 3.1.1
 
 ## Directory Structure
 
-<img src="README/Images/Figure1.PNG" width="100%">
+<img src="README/Images/Figure1.png" width="100%">
 The blue boxes denote the essential files or folders for all CV cases. The green boxes show those files only used for one CV case: anchors.txt is only utilized when dihedral is the CV while start.xyz and final.xyz only exist in the case of RMSD. The orange boxes illustrate those files and folders automatically generated after the program starts working. We have provided 3 examples: alanine dipeptide, DNA_1D42, RNA_2JXQ with initial setting.
 
 ## Working procedure
 
-<img src="README/Images/Figure2.PNG" width="100%">
+<img src="README/Images/Figure2.png" width="100%">
+
 Step 1: Determine appropriate coarse variables (CV)
 
 Step 2: Seek the Milestones (MS)
