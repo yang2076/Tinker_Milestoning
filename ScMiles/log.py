@@ -35,12 +35,12 @@ def log_properties(q, p, energy, c, energy_err, ms_list, log_path):
 
 def log_properties_2(tau1, tau2, MFPT_err, MFPT_err2, log_path):
     with open(log_path, 'a+') as f2:
-        print("MFPT is {:15.8e} ps, with an error of {:15.8e}, from eigenvalue method.".format(tau1, MFPT_err),file=f2)  
-        print("MFPT is {:15.8e} ps, with an error of {:15.8e}, from inverse method.".format(tau2, MFPT_err2),file=f2)
+        print("MFPT is {:15.8e} ps, with an error of {:15.8e}, from inverse method.".format(tau1, MFPT_err),file=f2)  
+        print("MFPT is {:15.8e} ps, with an error of {:15.8e}, from eigenvalue method.".format(tau2, MFPT_err2),file=f2)
 
 def log_properties_rev(tau1, tau2, MFPT_err, MFPT_err2, log_path):
     with open(log_path, 'a+') as f2:
         print("Reverse the reactant and product state:")
-        print("MFPT is {:15.8e} ps, with an error of {:15.8e}, from eigenvalue method.".format(tau1, MFPT_err),file=f2)  
-        print("MFPT is {:15.8e} ps, with an error of {:15.8e}, from inverse method.".format(tau2, MFPT_err2),file=f2)
+        print("MFPT is {:15.8e} ps, with an error of {:15.8e}, from inverse method.".format(tau1, MFPT_err),file=f2)  
+        print("MFPT is {:15.8e} ps, with an error of {:15.8e}, from eigenvalue method.".format(tau2, MFPT_err2),file=f2)
 

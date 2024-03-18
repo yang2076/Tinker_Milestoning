@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Aug  6 15:21:21 2018
@@ -37,6 +37,10 @@ class parameters:
         # Path of forcefield prm
         self.path_forcefield = None
 
+        # Path of program
+        tmp_ = os.getcwd()
+        self.path_program = tmp_
+
         # Path of log file
         self.path_log = None
 
@@ -46,6 +50,9 @@ class parameters:
 
         # The current iteration number of the complete milestoning processes
         self.iteration = 0
+
+        # Parallelize the submission
+        self.num_sub = 1
 
         # Type of milestoning
         # 0 for classic milestoning; 1 for exact milestoning: iteration
@@ -248,6 +255,9 @@ class parameters:
         # k matrix singularity
         self.sing = True
 
+        # Smooth list limit
+        self.smooth_list_limit = 5
+
         # kij matrix
         self.kij = []
 
@@ -307,6 +317,8 @@ class parameters:
                     self.forcefield = str(info[1])
                 if "method" in info:
                     self.method = int(info[1])
+                if "num_sub" in info:
+                    self.num_sub = int(info[1])
 
                 if "initial_iteration" in info:
                     self.iteration = int(info[1]) - 1

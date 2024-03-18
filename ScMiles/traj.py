@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 27 16:20:21 2019
-
-@author: Wei Wei
-
 Running free trajectories.
-
 """
 
 import os, time, re, sys
@@ -58,7 +53,7 @@ class traj:
             job.submit()
         else:
             log(f"Error: Exceed the max md time for job {self.traj_name} in {self.MS_dir}", job.parameter.path_log)
-            sys.exit(0)
+            #sys.exit(0)
 
     def finish_iter(self, MS_name, index, ratio, save_frequency):
         self.time_collect(save_frequency*(index+2.-ratio))
@@ -121,7 +116,11 @@ class trajPool:
         time_std = []
         for traj_ in self.traj_dict.values():
             i = MS_list.index(traj_.start_MS)
-            time_list[i].append(traj_.time)
+            if(type(traj_.time) == np.ndarray):
+                time_list[i].append(traj_.time[0])
+                traj_.time = traj_.time[0]
+            else:
+                time_list[i].append(traj_.time)
         for i in range(dim):
             time_list_ = np.array(time_list[i])
             time_vec.append(np.average(time_list_))

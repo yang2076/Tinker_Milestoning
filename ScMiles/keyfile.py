@@ -1,27 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 27 14:16:45 2019
-
-@author: weiw
 """
 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jun 26 14:44:51 2018
-
-@author: Wei Wei
-
-This code generates the colvar configuration file that required by NAMD.
-
-Two constraints will be considered:
-    1. RMSD(x, anchor_a) = RMSD(x, anchor_b).
-    2. RMSD(x, any_anchors_besides_a_or_b) > RMSD(x, anchor_a) &&
-       RMSD(x, any_anchors_besides_a_or_b) > RMSD(x, anchor_b).
-       
-Note:        
-    RMSD(x, anchor_a): the root mean square displacement from anchor_a to x
 """
 
 import os

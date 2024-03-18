@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul  3 17:25:27 2018
-
-@author: Wei Wei
-
-This subroutine generates NAMD configuration based on templete and submits jobs.
 """
 
 import os, time
@@ -55,15 +50,26 @@ class run:
             elif(self.parameter.ensemble == 'NPT'):
                 f0.write("$DYNAMIC %s -k %s.key %i %f %f 4 %f %f > %s-results.log \n" %(c+'.xyz',self.job_name,self.steps,self.parameter.timeFactor,self.save_frequency,temperature,pressure,c))
             if(self.parameter.restrain == "RMSD" and self.job_name == c):
-                path_ref = self.parameter.path_RMSD_start
+                path_ref_0 = self.parameter.path_RMSD_start
+                path_ref_1 = self.parameter.path_RMSD_final
+                mol = c.split('-')[0] + ".xyz"
                 n = self.parameter.RMSD_solute_num
-                f0.write("superpose %s -k %s.key %s 1 1 %d N N M N 0.0 > RMSD-%s-start.log \n" %(path_ref,c,c+'.arc',n,c))
-                path_ref = self.parameter.path_RMSD_final
-                cmdstr = f"grep 'IMPOSE  --  After Rotation' RMSD-{c}-start.log > RMSD-{c}-start.dat\n"
-                f0.write(cmdstr)
-                f0.write("superpose %s -k %s.key %s 1 1 %d N N M N 0.0 > RMSD-%s-final.log \n" %(path_ref,c,c+'.arc',n,c))
-                cmdstr = f"grep 'IMPOSE  --  After Rotation' RMSD-{c}-final.log > RMSD-{c}-final.dat"
-                f0.write(cmdstr)
+                path_analyze = os.path.join(self.parameter.path_program, "analyze.py")
+                f0.write("python %s %s %s RMSD %s %s %d > RMSD-%s.dat\n" %(path_analyze,c+'.arc',mol,path_ref_0,path_ref_1,n,c))
+            elif(self.parameter.restrain == "dihedral" and self.job_name == c):
+                mol = c.split('-')[0] + ".xyz"
+                path_analyze = os.path.join(self.parameter.path_program, "analyze.py")
+                cmd_ = "python %s %s %s dihedral " %(path_analyze,c+'.arc',mol)
+                grp_ = self.parameter.restrain_grp
+                cmd_ += "%d %d %d %d > dih-%s.dat\n" %(grp_[0], grp_[1], grp_[2], grp_[3], c)
+                f0.write(cmd_)
+            elif(self.parameter.restrain == "2Ddihedral" and self.job_name == c):
+                mol = c.split('-')[0] + ".xyz"
+                path_analyze = os.path.join(self.parameter.path_program, "analyze.py")
+                cmd_ = "python %s %s %s 2Ddihedral " %(path_analyze,c+'.arc',mol)
+                grp_ = self.parameter.restrain_grp
+                cmd_ += "%d %d %d %d %d %d %d %d > dih2D-%s.dat\n" %(grp_[0], grp_[1], grp_[2], grp_[3], grp_[4], grp_[5], grp_[6], grp_[7], c)
+                f0.write(cmd_)
             f0.write(self.more_cmd)
 
         shstr = f"python /home/xy3866/bin_Miles/TinkerGPU2022/submitTinker.py -x {self.job_name}.sh -t GPU -p {self.work_path}"
@@ -79,33 +85,47 @@ class run:
             cmdstr = f"grep 'Picosecond' {c}-results.log > {c}-time.dat"
             subprocess.run(cmdstr, shell=True)
             nLines = sum(1 for line in open(f"{c}-time.dat"))
+            cmdstr = f"tail -n1 {c}-time.dat"
+            f_ = subprocess.Popen(cmdstr,shell=True, encoding="utf8", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            f_ = f_.stdout.read()
             if(nLines == num_snapshot):
                 return True
+            elif("Binary" in f_):
+                cmdstr = f"tail -n1 {c}-results.log"
+                f_ = subprocess.Popen(cmdstr,shell=True, encoding="utf8", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                f_ = f_.stdout.read().split()
+                if(len(f_) >= 1 and f_[0] == "Atoms"):
+                    log(f"Binary Problem in {self.job_name}", self.parameter.path_log)
+                    err_path = job.work_path + f"/{c}.err"
+                    with open(err_path, 'w') as f0:
+                        f0.write("Binary problem")
+                return False
             else:
                 return False
 
-    def RMSD_check(self, num_snapshot):
+    def structure_check(self, num_snapshot, restrn):
         os.chdir(self.work_path)
         c = self.coord_name
-        if not os.path.isfile(f"RMSD-{c}-start.log"):
-            return False
-        elif not os.path.isfile(f"RMSD-{c}-final.log"):
+        structure_file = ""
+        if(restrn == "RMSD"):
+           structure_file = f"RMSD-{c}.dat" 
+        elif(restrn == "dihedral"):
+           structure_file = f"dih-{c}.dat" 
+        elif(restrn == "2Ddihedral"):
+           structure_file = f"dih2D-{c}.dat" 
+        elif(restrn == "distance"):
+           structure_file = f"dist-{c}.dat" 
+        elif(restrn == "angle"):
+           structure_file = f"angle-{c}.dat" 
+
+        if not os.path.isfile(structure_file):
             return False
         else:
-            if not os.path.isfile(f"RMSD-{c}-start.dat"):
-                return False
-            nLines_start = sum(1 for line in open(f"RMSD-{c}-start.dat"))
-            if(nLines_start != num_snapshot):
-                return False
-
-            if not os.path.isfile(f"RMSD-{c}-final.dat"):
-                return False
-            nLines_final = sum(1 for line in open(f"RMSD-{c}-final.dat"))
-            if(nLines_final != num_snapshot):
-                return False
-
-            if(nLines_start == num_snapshot and nLines_final == num_snapshot):
+            RMSD_file = open(structure_file)
+            lines = RMSD_file.readlines()
+            RMSD_file.close()
+            nLines_ = len(lines)
+            if(nLines_ == num_snapshot):
                 return True
             else:
                 return False
-

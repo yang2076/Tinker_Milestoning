@@ -1,0 +1,80 @@
+# outputname in NAMD
+outputname Aladipep
+
+# method: 0 -- classic milestoning; 1 -- exaxt milestoning
+method 1
+
+# iteration
+initial_iteration 1
+max_iteration 100
+
+# milestoneSearch: 0 -- traverse; 1 -- seek
+milestoneSearch 0
+
+time_step 2
+
+# only for seek procedure
+seek_traj 10
+seek_time 0.2
+seek_save_frequency 0.01
+
+restrain_md_time 1.5
+restrain_eq_time 0.5
+
+# first snapshot to use
+start_traj 10
+# how many trajectories to launch for each iteration
+traj_per_launch 100
+# the interval between two snapshots 
+interval 1000
+
+
+sampling_time 10
+save_frequency 0.01
+max_traj_per_launch 200
+
+# anchor infomations
+anchorsNum 12
+
+# restraint type
+restrain_type dihedral 7 9 15 17
+forcefield amoebabio18.prm
+#skip_restrain
+
+# states
+reactant 5,6
+product 11,12
+
+# periodic boundary
+pbc 1,12
+
+# milestone threshold
+# 1D/2D dihedral : degree; RMSD : Angstrom.
+milestone_threshold 0.1
+
+# tinker settings
+path_tinker /home/xy3866/Tinker9_bin_11.2
+ensemble NVT
+temperature 298.15
+pressure 1.0
+
+# MFPT convergence check
+tolerance 0.05
+
+# random seed
+seed 12345
+
+# harmonic force constant
+force_const 10.
+
+#finished_restrain 2,3
+#finished_restrain 3,4
+#finished_restrain 4,5
+#finished_restrain 5,6
+#finished_restrain 6,7
+#finished_restrain 7,8
+#finished_restrain 8,9
+#finished_restrain 9,10
+#finished_restrain 10,11
+#finished_restrain 11,12
+#finished_restrain 1,12

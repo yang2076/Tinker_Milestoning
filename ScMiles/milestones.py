@@ -254,18 +254,6 @@ class milestones:
             frame_i = list(map(lambda x, y: x + y, frame_i, tmp_))
         return frame_i
 
-    def __calculate_dihedral(self, coord):
-        A = np.array(coord[0])
-        B = np.array(coord[1])
-        C = np.array(coord[2])
-        D = np.array(coord[3])
-        a, b, c = B-A, C-B, D-C
-        n1, n2 = np.cross(a,b), np.cross(b,c)
-        tmp = np.arccos(np.dot(n1, n2)/(np.linalg.norm(n1)*np.linalg.norm(n2)))*180.0/np.pi
-        sign = np.dot(a, n2)
-        tmp = -tmp if sign < 0.0 else tmp
-        return self.__check_dihedral_pbc(tmp)
-
     def __hit_MS_dih(self, dih):
         for i in self.possible_MS_property.keys():
             if(np.abs(self.possible_MS_property[i] - dih) <= self.parameter.MS_threshold):
@@ -285,6 +273,9 @@ class milestones:
                 config.append(j)
             else:
                 terms_1 = j.split()
+                if(len(terms_1) == 1):
+                    print(terms_1)
+                    continue
                 terms_2 = config_2[i].split()
                 i_ = int(terms_1[0])
                 a_ = terms_1[1]
@@ -439,36 +430,48 @@ class milestones:
         fine_hit = True if seek_ else False
         hit_MS = None
         hit_MS_seek = []
+        val_1 = []
+        val_2 = []
+        structure_job = run(self.parameter, work_path, coord_name, coord_name, 0, 0.)
+        while True:
+            rFinish = structure_job.structure_check(num_snapshot, restrn)
+            if rFinish:
+                break
+            else:
+                time.sleep(0.5)
+
         if(restrn == "dihedral"):
-            coord = []
-            dihedral_list = []
-            for i in range(num_snapshot):
+            val_1 = np.loadtxt(f"dih-{coord_name}.dat",usecols=(0,))
+        elif(restrn == "2Ddihedral"):
+            val_1 = np.loadtxt(f"dih-{coord_name}.dat",usecols=(0,))
+            val_2 = np.loadtxt(f"dih-{coord_name}.dat",usecols=(1,))
+        elif(restrn == "RMSD"):
+            val_1 = np.loadtxt(f"RMSD-{coord_name}.dat",usecols=(0,))
+            val_2 = np.loadtxt(f"RMSD-{coord_name}.dat",usecols=(1,))
+
+        for i in range(num_snapshot):
+            if(restrn == "dihedral"):
+                hit_MS = self.__hit_MS_dih(val_1[i])
+            elif(restrn == "2Ddihedral"):
+                hit_MS = self.__hit_MS_2Ddih([val_1[i], val_2[i]])
+            elif(restrn == "RMSD"):
+                hit_MS = self.__hit_MS_RMSD(val_1[i], val_2[i])
+
+            if(hit_MS and hit_MS not in MS_list_):
+                MS_list_.append(hit_MS)
+                if not seek_:
+                    return hit_MS, i, 1
+                new_MS_dir = crddir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1])
+                os.makedirs(new_MS_dir)
                 lines = self.__read_tinker_arc(coord_name, i)
-                a_ = lines[self.parameter.restrain_grp[0]+1].split()
-                a_1 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[self.parameter.restrain_grp[1]+1].split()
-                a_2 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[self.parameter.restrain_grp[2]+1].split()
-                a_3 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[self.parameter.restrain_grp[3]+1].split()
-                a_4 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                coord = [a_1, a_2, a_3, a_4]
-                dihedral_val = self.__calculate_dihedral(coord)
-                dihedral_list.append(dihedral_val)
-                hit_MS = self.__hit_MS_dih(dihedral_val)
-                if(hit_MS and hit_MS not in MS_list_):
-                    MS_list_.append(hit_MS)
-                    if not seek_:
-                        return hit_MS, i, 1
-                    new_MS_dir = crddir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1])
-                    os.makedirs(new_MS_dir)
-                    MS_config_path = new_MS_dir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1]) + '.xyz'
-                    self.__write2txyz(MS_config_path, lines)
-                    fine_hit = True
-                    hit_MS_seek.append(hit_MS)
+                MS_config_path = new_MS_dir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1]) + '.xyz'
+                self.__write2txyz(MS_config_path, lines)
+                fine_hit = True
+                hit_MS_seek.append(hit_MS)
+
             # avg for 1D only right now
-            if not fine_hit:
-                n, ratio, hit_MS = self.__hit_MS_dih_2(dihedral_list)
+            if (restrn == "dihedral" and not fine_hit):
+                n, ratio, hit_MS = self.__hit_MS_dih_2(val_1)
                 if(hit_MS and hit_MS not in MS_list_):
                     MS_list_.append(hit_MS)
                     if not seek_:
@@ -481,74 +484,10 @@ class milestones:
                     MS_config_path = new_MS_dir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1]) + '.xyz'
                     self.__write2txyz(MS_config_path, config_)
                     hit_MS_seek.append(hit_MS)
-            if not seek_:
-                return None, 0, 0
-            return hit_MS_seek
-        elif(restrn == "2Ddihedral"):
-            coord_1 = []
-            coord_2 = []
-            dihedral_list = []
-            for i in range(num_snapshot):
-                lines = self.__read_tinker_arc(coord_name, i)
-                a_ = lines[self.parameter.restrain_grp[0]+1].split()
-                a_1 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[self.parameter.restrain_grp[1]+1].split()
-                a_2 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[self.parameter.restrain_grp[2]+1].split()
-                a_3 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[self.parameter.restrain_grp[3]+1].split()
-                a_4 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[self.parameter.restrain_grp[4]+1].split()
-                a_5 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[self.parameter.restrain_grp[5]+1].split()
-                a_6 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[self.parameter.restrain_grp[6]+1].split()
-                a_7 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                a_ = lines[self.parameter.restrain_grp[7]+1].split()
-                a_8 = [float(a_[2]),float(a_[3]),float(a_[4])]
-                coord_1 = [a_1, a_2, a_3, a_4]
-                coord_2 = [a_5, a_6, a_7, a_8]
-                dihedral_val_1 = self.__calculate_dihedral(coord_1)
-                dihedral_val_2 = self.__calculate_dihedral(coord_2)
-                dihedral_list.append([dihedral_val_1,dihedral_val_2])
-                hit_MS = self.__hit_MS_2Ddih([dihedral_val_1,dihedral_val_2])
-                if(hit_MS and hit_MS not in MS_list_):
-                    MS_list_.append(hit_MS)
-                    if(not seek_):
-                        return hit_MS, i, 1
-                    new_MS_dir = crddir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1])
-                    os.makedirs(new_MS_dir)
-                    MS_config_path = new_MS_dir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1]) + '.xyz'
-                    self.__write2txyz(MS_config_path, lines)
-                    hit_MS_seek.append(hit_MS)
-            if not seek_:
-                return None, 0, 0
-            return hit_MS_seek
-        elif(restrn == "RMSD"):
-            RMSD_job = run(self.parameter, work_path, coord_name, coord_name, 0, 0.)
-            while True:
-                rFinish = RMSD_job.RMSD_check(num_snapshot)
-                if rFinish:
-                    break
-                else:
-                    time.sleep(0.5)
-            RMSD_start = np.loadtxt(f"RMSD-{coord_name}-start.dat",usecols=(-1,))
-            RMSD_final = np.loadtxt(f"RMSD-{coord_name}-final.dat",usecols=(-1,))
-            for i in range(num_snapshot):
-                hit_MS = self.__hit_MS_RMSD(RMSD_start[i], RMSD_final[i])
-                if(hit_MS and hit_MS not in MS_list_):
-                    MS_list_.append(hit_MS)
-                    if(not seek_):
-                        return hit_MS, i, 1
-                    new_MS_dir = crddir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1])
-                    os.makedirs(new_MS_dir)
-                    lines = self.__read_tinker_arc(coord_name, i)
-                    MS_config_path = new_MS_dir + '/MS' + str(hit_MS[0]) + '_' + str(hit_MS[1]) + '.xyz'
-                    self.__write2txyz(MS_config_path, lines)
-                    hit_MS_seek.append(hit_MS)
-            if not seek_:
-                return None, 0, 0
-            return hit_MS_seek
+
+        if not seek_:
+            return None, 0, 0
+        return hit_MS_seek
 
     def __seek_milestones(self):
         from shutil import copy
@@ -617,14 +556,15 @@ class milestones:
                                 log(f"MS{ii[0]}_{ii[1]} is found.", self.parameter.path_log)
                         else:
                             log(f"No new MS is found.", self.parameter.path_log)
-                        os.remove(job.work_path + '/' + job.job_name + '.arc')
-                        os.remove(job.work_path + '/' + job.job_name + '.dyn')
-                        os.remove(job.work_path + '/' + job.job_name + '-results.log')
+                        tmp_1 = job.work_path + '/' + job.job_name + '.arc'
+                        if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                        tmp_1 = job.work_path + '/' + job.job_name + '.dyn'
+                        if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                        tmp_1 = job.work_path + '/' + job.job_name + '-results.log'
+                        if(os.path.isfile(tmp_1)): os.remove(tmp_1)
                         if(self.parameter.restrain == "RMSD"):
-                            os.remove(job.work_path + '/' + 'RMSD-' + job.job_name + '-start.log')
-                            os.remove(job.work_path + '/' + 'RMSD-' + job.job_name + '-final.log')
-                            os.remove(job.work_path + '/' + 'RMSD-' + job.job_name + '-start.dat')
-                            os.remove(job.work_path + '/' + 'RMSD-' + job.job_name + '-final.dat')
+                            tmp_1 = job.work_path + '/' + 'RMSD-' + job.job_name + '.dat'
+                            if(os.path.isfile(tmp_1)): os.remove(tmp_1)
                     else:
                         time.sleep(1.0)
                 if(Finish_num == len_job_list):
@@ -713,10 +653,10 @@ class milestones:
                     timestr = str(time.time()).replace('.', '')
                     scriptfile = os.path.join(self.parameter.path_jobsubmit, f"read_{timestr}.sh")
                     shfile = os.path.join(job.work_path, f"read_traj.sh")
-                    end_config = eq_num + self.parameter.trajPerLaunch
+                    end_config = eq_num + self.parameter.trajPerLaunch * self.parameter.interval
                     with open(shfile, 'w') as f0:
                         f0.write(f"python read_config.py {job.coord_name} {crddir} {eq_num} {end_config} {self.parameter.interval}")
-                    shstr = f"python /home/xy3866/bin_Miles1/TinkerGPU2022/submitTinker.py -x read_traj.sh -t CPU -p {MS_dir}"
+                    shstr = f"python /home/xy3866/bin_Miles/TinkerGPU2022/submitTinker.py -x read_traj.sh -t CPU -p {MS_dir}"
                     with open(scriptfile, 'w') as f0:
                         f0.write(shstr)
                     for j in range(eq_num, num_snapshot, self.parameter.interval):
@@ -803,10 +743,14 @@ class milestones:
                 if os.path.isfile(err_path):
                     log(f"Problem in {job.work_path}/{job.coord_name}", self.parameter.path_log)
                     os.remove(err_path)
-                    os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}-results.log')
-                    os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}-time.dat')
-                    os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}.arc')
-                    os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}.dyn')
+                    tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}-results.log'
+                    if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                    tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}-time.dat'
+                    if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                    tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}.arc'
+                    if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                    tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}.dyn'
+                    if(os.path.isfile(tmp_1)): os.remove(tmp_1)
                     key_path_ = job.work_path + f'/{self.traj_dict[i].traj_name}.key'
                     copy(self.parameter.work_dir + '/free.key', job.work_path + f'/{self.traj_dict[i].traj_name}.key')
                     r = self.__random_num_assign([])
@@ -823,16 +767,20 @@ class milestones:
                     length = self.traj_dict[i].length
                     if(hit_MS):
                         if(ratio != 1):
-                            config_1 = self.__read_tinker_arc(self.traj_dict[i].traj_name, index)
-                            config_2 = self.__read_tinker_arc(self.traj_dict[i].traj_name, index+1)
-                            config_ = self.__avg_config(config_1, config_2, ratio)
+                            #config_1 = self.__read_tinker_arc(self.traj_dict[i].traj_name, index)
+                            #config_2 = self.__read_tinker_arc(self.traj_dict[i].traj_name, index+1)
+                            #config_ = self.__avg_config(config_1, config_2, ratio)
+                            #self.__write2txyz(txyz_path, config_)
+                            config_ = self.__read_tinker_arc(self.traj_dict[i].traj_name, index)
                             self.__write2txyz(txyz_path, config_)
                         else:
                             config_ = self.__read_tinker_arc(self.traj_dict[i].traj_name, index)
                             self.__write2txyz(txyz_path, config_)
 
-                        os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}-results.log')
-                        os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}-time.dat')
+                        tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}-results.log'
+                        if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                        tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}-time.dat'
+                        if(os.path.isfile(tmp_1)): os.remove(tmp_1)
 
                         while True:
                             if(hit_MS in self.parameter.MS_list or hit_MS == None):
@@ -848,41 +796,53 @@ class milestones:
                             hit_MS, index, ratio = self.__whether_hit_new_MS(job.work_path, job.coord_name, num_snapshot, 0, [self.traj_dict[i].length], MS_list_, False)
 
                         if(self.parameter.restrain == "RMSD"):
-                            os.remove(job.work_path + f"/RMSD-{job.coord_name}-start.log")
-                            os.remove(job.work_path + f"/RMSD-{job.coord_name}-final.log")
-                            os.remove(job.work_path + f"/RMSD-{job.coord_name}-start.dat")
-                            os.remove(job.work_path + f"/RMSD-{job.coord_name}-final.dat")
+                            tmp_1 = job.work_path + f"/RMSD-{job.coord_name}.dat"
+                            if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                        elif(self.parameter.restrain == "dihedral"):
+                            tmp_1 = job.work_path + f"/dih-{job.coord_name}.dat"
+                            if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+
                         if(not hit_MS):
                             log(f"Restart at {job.work_path}/{job.coord_name}", self.parameter.path_log)
                             config_ = self.__read_tinker_arc(self.traj_dict[i].traj_name, num_snapshot-1)
                             self.__write2txyz(txyz_path, config_)
-                            os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}.arc')
+                            tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}.arc'
+                            if(os.path.isfile(tmp_1)): os.remove(tmp_1)
                             self.traj_dict[i].restart(job)
                             continue
-                        os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}.arc')
-                        os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}.dyn')
+                        tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}.arc'
+                        if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                        tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}.dyn'
+                        if(os.path.isfile(tmp_1)): os.remove(tmp_1)
                         Finish_job_list.append(job.job_name)
                         Finish_num += 1
                         remain_job_num -= 1
                         MS_ = self.traj_dict[i].start_MS
                         self.traj_dict[i].finish_iter(hit_MS, index, ratio, self.parameter.saveFrequency)
                         time_ = self.traj_dict[i].time
-                        msg_ = f"MS{hit_MS[0]}_{hit_MS[1]} is hit from {MS_[0]}_{MS_[1]}."
-                        msg_ += " Hitting time: %9.3f ps" %(time_)
-                        msg_ += " Num of jobs remaining: %5d" %(remain_job_num)
+                        msg_ = f"{self.traj_dict[i].traj_name} "
+                        msg_ += f"MS{MS_[0]}_{MS_[1]} to {hit_MS[0]}_{hit_MS[1]}."
+                        msg_ += " Time: %7.3f ps" %(time_)
+                        msg_ += " Remaining: %5d" %(remain_job_num)
                         log(msg_, self.parameter.path_log)
                     else:
                         log(f"Restart at {job.work_path}/{job.coord_name}", self.parameter.path_log)
                         config_ = self.__read_tinker_arc(self.traj_dict[i].traj_name, num_snapshot-1)
                         self.__write2txyz(txyz_path, config_)
-                        os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}.arc')
-                        os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}-time.dat')
-                        os.remove(job.work_path + f'/{self.traj_dict[i].traj_name}-results.log')
+                        tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}.arc'
+                        if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                        tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}-time.dat'
+                        if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                        tmp_1 = job.work_path + f'/{self.traj_dict[i].traj_name}-results.log'
+                        if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+
                         if(self.parameter.restrain == "RMSD"):
-                            os.remove(job.work_path + f"/RMSD-{job.coord_name}-start.log")
-                            os.remove(job.work_path + f"/RMSD-{job.coord_name}-final.log")
-                            os.remove(job.work_path + f"/RMSD-{job.coord_name}-start.dat")
-                            os.remove(job.work_path + f"/RMSD-{job.coord_name}-final.dat")
+                            tmp_1 = job.work_path + f"/RMSD-{job.coord_name}.dat"
+                            if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+                        elif(self.parameter.restrain == "dihedral"):
+                            tmp_1 = job.work_path + f"/dih-{job.coord_name}.dat"
+                            if(os.path.isfile(tmp_1)): os.remove(tmp_1)
+
                         self.traj_dict[i].restart(job)
             if(Finish_num == len_job_list):
                 log(f"Iteration {self.parameter.iteration} completed", self.parameter.path_log)
@@ -1055,6 +1015,7 @@ class milestones:
         log("Begin unbiased MD for the final sampling\n", self.parameter.path_log)
         self.trajPool_ = trajPool(self.parameter, self.traj_dict)
         MFPT_temp = 1e-19
+        MFPT_temp_list = []
         while True:
             if(self.parameter.iteration >= 1):
                 self.__create_more_traj()
@@ -1072,7 +1033,17 @@ class milestones:
                 self.parameter.MFPT_1_rev = 0.
                 self.parameter.MFPT_2_rev = 0.
             elif(np.abs(self.parameter.MFPT_1 - MFPT_temp) / MFPT_temp > self.parameter.tolerance):
+                print("Comparison:", self.parameter.MFPT_1, MFPT_temp)
                 log("Prepare for the next iteration", self.parameter.path_log)
+                if(len(MFPT_temp_list) >= 5):
+                    MFPT_temp_list.pop(0)
+
+                if(self.parameter.iteration == 0):
+                    MFPT_temp = self.parameter.MFPT_1
+                else:
+                    MFPT_temp_list.append(self.parameter.MFPT_1)
+                    MFPT_temp = sum(MFPT_temp_list)/len(MFPT_temp_list)
+
                 self.parameter.print_properties()
                 self.parameter.MFPT_1 = 0.
                 self.parameter.MFPT_2 = 0.
@@ -1083,6 +1054,5 @@ class milestones:
                 log("MFPT converged", self.parameter.path_log)
                 break
             self.parameter.iteration += 1
-            MFPT_temp = (self.parameter.MFPT_1+MFPT_temp*(self.parameter.iteration-1))/self.parameter.iteration
             self.trajPool_.prep_for_next_iter()
 
