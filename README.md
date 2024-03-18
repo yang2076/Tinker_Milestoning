@@ -5,11 +5,17 @@ This program is developed for performing Milestoning method with Tinker MD Softw
 ## Environment setting and required softwares
 
 Tinker9_GPU: https://github.com/TinkerTools/tinker9
+
 Tinker8_CPU: version > 8.9.4
+
 (please follow the environment requirements mentioned in README of Tinker9 Github SIte)
+
 LOOS: https://github.com/GrossfieldLab/loos version > 4.0.4
+
 numpy 1.22.3
+
 sympy 1.11.1
+
 openbabel 3.1.1
 
 ## Directory Structure
