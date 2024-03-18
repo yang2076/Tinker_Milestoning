@@ -54,7 +54,8 @@ The program conducts the unrestrained MD from all the configurations of the chos
 ## Input Setting
 input.txt records the input setting to lead the whole job, and here are the meanings of all the important commands and keywords:
 
-`path_jobsubmit`  : The path of submission directory, which contains all the generated GPU MD job .sh files for parallelized submission
+* `path_jobsubmit`  : The path of submission directory, which contains all the generated GPU MD job .sh files for parallelized submission
+
 path_tinker  : The path of directory including Tinker executives: analyze9.x, minimize9.x, dynamic9.x
 initial_iteration  : The starting iteration index (commonly, we starts from 1)
 max_iteration  : The maximum number of iterations
