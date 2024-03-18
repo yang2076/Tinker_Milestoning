@@ -83,6 +83,7 @@ input.txt records the input setting to lead the whole job, and here are the mean
 * `sampling_time`  : The sampling time for a single MD job in Production Step (unit: ps, default: 100.0)
 
 * `save_frequency`  : The save frequency of MD jobs in Production Step (unit: ns, default: 0.01)
+
 * `max_traj_per_launch`  : The maximum of trajectories for each MS during the iterations
 
 * `max_md_time`  : The maximum time limit of each MS job (one MD job may restart from the last coordinates for many times, the program will record all the time consumed by any single job and make sure it will not exceed this upper limit.) (unit: ns, default: 10.0)
@@ -91,9 +92,9 @@ input.txt records the input setting to lead the whole job, and here are the mean
 
 * `restrain_type`  : The type of coarse variables (dihedral or RMSD) 
 
-`dihedral a b c d` (a,b,c,d are the atom id defining the dihedral)
+`restrain_type dihedral a b c d` (a,b,c,d are the atom id defining the dihedral)
 
-`RMSD A B C` (A: RMSD between reactant and product, in Angstrom; B: divide the value of RMSD A into B parts; C: the first C atoms will be used to calculate the RMSD)
+`restrain_type RMSD A B C` (A: RMSD between reactant and product, in Angstrom; B: divide the value of RMSD A into B parts; C: the first C atoms will be used to calculate the RMSD)
 
 * `forcefield`  : The forcefield file .prm
 
