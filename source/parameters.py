@@ -1,11 +1,12 @@
 #/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Aug  6 15:21:21 2018
+Mon Feb 13 2023
 
-@author: Wei Wei
+@author: Xudong Yang
 
-A class that stores all of the information from input 
+Designed for Tinker-compatible interface
+
 """
 
 import os,sys

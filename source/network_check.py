@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Sep 24 16:23:54 2018
+Mon Feb 13 2023
 
-@author: Wei Wei
+@author: Xudong Yang
 
-Apply Breadth First Seach to check if the reactant and product are connected.
-Return True if connected; return False if not.
+Designed for Tinker-compatible interface
 
 """
 

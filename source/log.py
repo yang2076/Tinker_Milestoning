@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Sep 16 15:49:08 2018
 
-@author: Wei Wei
+Mon Feb 13 2023
+
+@author: Xudong Yang
+
+Designed for Tinker-compatible interface
 
 This subroutine writes running informations to log file.
 

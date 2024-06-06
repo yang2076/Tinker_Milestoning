@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Nov 19 11:06:15 2018
-
-@author: Wei Wei
-
-Main script which inclues major workflow.
-
-"""
 
 import time
 import numpy as np

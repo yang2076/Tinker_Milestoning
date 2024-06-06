@@ -1,14 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Mar 12 15:35:54 2019
-
-@author: Wei Wei
-
-This subroutine stores the milestone information.
-It initializes the milestone list, also contains the function that provides initial and final milestone.
-
-Modified on Mon Feb 13 2023
+Mon Feb 13 2023
 
 @author: Xudong Yang
 

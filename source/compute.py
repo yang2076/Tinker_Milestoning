@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Aug  6 10:37:37 2018
+Mon Feb 13 2023
 
-@author: Wei Wei
+@author: Xudong Yang
 
+Designed for Tinker-compatible interface
 
 This subroutine takes the k and t, and calculate flux, probability,
 free energy, committor, and MFPT.
